@@ -1,108 +1,81 @@
 const Blog = require('../models/Blog');
-const { upload } = require('../config/cloudinary');
+const cloudinary = require('../config/cloudinary');
+const multer = require('multer');
+const { CloudinaryStorage } = require('multer-storage-cloudinary');
 
-// 📸 Middleware to handle single image upload using Cloudinary
+// ✅ Set up Cloudinary storage
+const storage = new CloudinaryStorage({
+  cloudinary,
+  params: {
+    folder: 'blog_images',
+    allowed_formats: ['jpg', 'jpeg', 'png'],
+  },
+});
+
+const upload = multer({ storage });
+
+// ✅ Middleware for uploads
 exports.uploadMiddleware = upload.single('image');
 
-// 🧾 List all posts
+// ✅ Create post
+exports.create = async (req, res) => {
+  try {
+    const { title, content, author } = req.body;
+    const image = req.file ? req.file.path : null;
+
+    const blog = new Blog({ title, content, author, image });
+    await blog.save();
+
+    res.status(201).json(blog);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+// ✅ Get all posts
 exports.list = async (req, res) => {
   try {
-    const posts = await Blog.find()
-      .sort({ createdAt: -1 })
-      .populate('author', 'username displayName avatarPath')
-      .lean();
-    res.json(posts);
+    const blogs = await Blog.find().sort({ createdAt: -1 });
+    res.json(blogs);
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'server error' });
+    res.status(500).json({ error: err.message });
   }
 };
 
-// 🆕 Create a new post
-exports.create = async (req, res) => {
-  if (!req.currentUser) return res.status(401).json({ error: 'unauthorized' });
-
-  try {
-    const { title, content } = req.body;
-    const imagePath = req.file ? req.file.path : null; // Cloudinary URL
-
-    const blog = await Blog.create({
-      author: req.currentUser.id,
-      title,
-      content,
-      imagePath,
-    });
-
-    const savedBlog = await Blog.findById(blog._id)
-      .populate('author', 'username displayName avatarPath')
-      .lean();
-
-    res.json(savedBlog);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'image upload failed' });
-  }
-};
-
-// 📄 Get single post
+// ✅ Get single post
 exports.get = async (req, res) => {
   try {
-    const post = await Blog.findById(req.params.id)
-      .populate('author', 'username displayName avatarPath')
-      .lean();
-
-    if (!post) return res.status(404).json({ error: 'not found' });
-    res.json(post);
+    const blog = await Blog.findById(req.params.id);
+    if (!blog) return res.status(404).json({ message: 'Post not found' });
+    res.json(blog);
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'server error' });
+    res.status(500).json({ error: err.message });
   }
 };
 
-// ✏️ Update a post
+// ✅ Update post
 exports.update = async (req, res) => {
-  if (!req.currentUser) return res.status(401).json({ error: 'unauthorized' });
-
   try {
-    const post = await Blog.findById(req.params.id);
-    if (!post) return res.status(404).json({ error: 'not found' });
-    if (post.author.toString() !== req.currentUser.id)
-      return res.status(403).json({ error: 'forbidden' });
+    const { title, content } = req.body;
+    const image = req.file ? req.file.path : undefined;
 
-    // If new image uploaded, update it
-    if (req.file) {
-      post.imagePath = req.file.path; // Cloudinary URL
-    }
-
-    post.title = req.body.title;
-    post.content = req.body.content;
-    await post.save();
-
-    const updatedPost = await Blog.findById(post._id)
-      .populate('author', 'username displayName avatarPath')
-      .lean();
-
-    res.json(updatedPost);
+    const blog = await Blog.findByIdAndUpdate(
+      req.params.id,
+      { title, content, ...(image && { image }) },
+      { new: true }
+    );
+    res.json(blog);
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'server error' });
+    res.status(500).json({ error: err.message });
   }
 };
 
-// 🗑️ Delete a post
+// ✅ Delete post
 exports.remove = async (req, res) => {
-  if (!req.currentUser) return res.status(401).json({ error: 'unauthorized' });
-
   try {
-    const post = await Blog.findById(req.params.id);
-    if (!post) return res.status(404).json({ error: 'not found' });
-    if (post.author.toString() !== req.currentUser.id)
-      return res.status(403).json({ error: 'forbidden' });
-
-    await Blog.deleteOne({ _id: post._id });
-    res.json({ success: true });
+    await Blog.findByIdAndDelete(req.params.id);
+    res.json({ message: 'Post deleted' });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'server error' });
+    res.status(500).json({ error: err.message });
   }
 };
