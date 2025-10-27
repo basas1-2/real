@@ -1,12 +1,11 @@
 const express = require('express');
 const router = express.Router();
 const blogController = require('../controllers/blogController');
-const upload = require('../config/multer'); // Import the Multer configuration
 
 router.get('/api/list', blogController.list);
-router.post('/api', upload.single('image'), blogController.create); // Add upload middleware
+router.post('/api', blogController.uploadMiddleware, blogController.create);
 router.get('/api/:id', blogController.get);
-router.put('/api/:id', upload.single('image'), blogController.update); // Add upload middleware
+router.put('/api/:id', blogController.uploadMiddleware, blogController.update);
 router.delete('/api/:id', blogController.remove);
 
 module.exports = router;
