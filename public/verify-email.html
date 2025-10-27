@@ -1,0 +1,33 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8"/>
+  <title>Verify Your Email</title>
+  <link rel="stylesheet" href="/styles.css"/>
+</head>
+<body>
+  <header class="topbar">
+    <div class="container">
+      <a href="/" class="logo">
+        <img src="/images/images (1).jpeg" height="60">
+      </a>
+      <nav id="nav"></nav>
+    </div>
+  </header>
+  <main class="container">
+    <div class="auth-container">
+      <h2>Email Verification</h2>
+      <div id="verificationStatus" class="msg">Verifying your email...</div>
+      <div id="resendContainer" style="display:none;">
+        <p>Didn't receive the verification email?</p>
+        <form id="resendForm">
+          <input type="email" name="email" placeholder="Enter your email" required/>
+          <button type="submit" class="btn">Resend Verification Email</button>
+        </form>
+      </div>
+    </div>
+  </main>
+  <script src="/_nav.js"></script>
+  <script src="/verify_email_bundle.js"></script>
+</body>
+</html>

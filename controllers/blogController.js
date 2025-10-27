@@ -1,81 +1,82 @@
-const Blog = require('../models/Blog');
-const cloudinary = require('../config/cloudinary');
-const multer = require('multer');
-const { CloudinaryStorage } = require('multer-storage-cloudinary');
+const Blog = require('../models/Blog'); // Assuming you have a Blog model
 
-// ✅ Set up Cloudinary storage
-const storage = new CloudinaryStorage({
-  cloudinary,
-  params: {
-    folder: 'blog_images',
-    allowed_formats: ['jpg', 'jpeg', 'png'],
-  },
-});
-
-const upload = multer({ storage });
-
-// ✅ Middleware for uploads
-exports.uploadMiddleware = upload.single('image');
-
-// ✅ Create post
-exports.create = async (req, res) => {
-  try {
-    const { title, content, author } = req.body;
-    const image = req.file ? req.file.path : null;
-
-    const blog = new Blog({ title, content, author, image });
-    await blog.save();
-
-    res.status(201).json(blog);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-};
-
-// ✅ Get all posts
+// List all blogs
 exports.list = async (req, res) => {
   try {
-    const blogs = await Blog.find().sort({ createdAt: -1 });
-    res.json(blogs);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
+    const blogs = await Blog.find();
+    res.status(200).json(blogs);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch blogs' });
   }
 };
 
-// ✅ Get single post
+// Create a new blog
+exports.create = async (req, res) => {
+  try {
+    const { title, content } = req.body;
+    const imageUrl = req.file ? req.file.path : null; // Get the Cloudinary URL
+
+    const newBlog = new Blog({
+      title,
+      content,
+      image: imageUrl, // Save the image URL
+    });
+
+    await newBlog.save();
+    res.status(201).json(newBlog);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to create blog' });
+  }
+};
+
+// Get a single blog by ID
 exports.get = async (req, res) => {
   try {
     const blog = await Blog.findById(req.params.id);
-    if (!blog) return res.status(404).json({ message: 'Post not found' });
-    res.json(blog);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
+    if (!blog) {
+      return res.status(404).json({ error: 'Blog not found' });
+    }
+    res.status(200).json(blog);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch blog' });
   }
 };
 
-// ✅ Update post
+// Update a blog
 exports.update = async (req, res) => {
   try {
     const { title, content } = req.body;
-    const image = req.file ? req.file.path : undefined;
+    const imageUrl = req.file ? req.file.path : null; // Get the Cloudinary URL
 
-    const blog = await Blog.findByIdAndUpdate(
+    const updatedBlog = await Blog.findByIdAndUpdate(
       req.params.id,
-      { title, content, ...(image && { image }) },
+      {
+        title,
+        content,
+        ...(imageUrl && { image: imageUrl }), // Update the image URL if provided
+      },
       { new: true }
     );
-    res.json(blog);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
+
+    if (!updatedBlog) {
+      return res.status(404).json({ error: 'Blog not found' });
+    }
+
+    res.status(200).json(updatedBlog);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to update blog' });
   }
 };
 
-// ✅ Delete post
+// Delete a blog
 exports.remove = async (req, res) => {
   try {
-    await Blog.findByIdAndDelete(req.params.id);
-    res.json({ message: 'Post deleted' });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
+    const deletedBlog = await Blog.findByIdAndDelete(req.params.id);
+    if (!deletedBlog) {
+      return res.status(404).json({ error: 'Blog not found' });
+    }
+    res.status(200).json({ message: 'Blog deleted successfully' });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to delete blog' });
   }
 };

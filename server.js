@@ -42,9 +42,5 @@ app.use('/blogs', blogRoutes);
 
 app.get('/', (req,res) => res.sendFile(path.join(__dirname,'public','index.html')));
 
-const PORT = process.env.PORT || 8000;
-//Catch-all route to serve frontend (important for React Router or SPA)
-app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
-});
+const PORT = process.env.PORT || 8001;
 app.listen(PORT, ()=> console.log(`Server running on port ${PORT}`));

@@ -227,35 +227,8 @@ input:focus, textarea:focus {
 }
 
 .post-image img {
-  /* Generic post image defaults (will be overridden for feed vs single post) */
-  display: block;
-  width: auto;
-  height: auto;
   max-width: 100%;
-  object-fit: contain;
   border-radius: 4px;
-}
-
-/* Feed (post snippets) - smaller, left aligned */
-.post-card .post-image img {
-  max-width: 600px;
-  max-height: 200px;
-  margin: 0.5rem 0 0 0; /* align to left */
-}
-
-/* Single post page - larger when viewing the full post */
-#post .post-image img, .post-page .post-image img {
-  max-width: 800px;
-  max-height: 400px;
-  margin: 0.75rem 0 0 0; /* align to left */
-}
-
-#post .post-image a {
-  display: inline-block;
-}
-
-#post .post-image a img {
-  cursor: zoom-in;
 }
 
 .see-more {
